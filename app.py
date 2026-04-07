@@ -1,5 +1,6 @@
 import streamlit as st
 from sqlmodel import Session, select
+from external_api import search_german_food
 import pandas as pd
 import plotly.express as px
 import algorithm
@@ -8,7 +9,6 @@ from models import engine, Food, create_db_and_tables
 # 确保数据库表在云端启动时自动创建
 try:
     create_db_and_tables()
-    # 可以在这里调用一个简化的初始化逻辑，确保食材库不是空的
 except Exception as e:
     st.error(f"数据库初始化失败: {e}")
 
@@ -19,7 +19,11 @@ st.set_page_config(page_title="硬核营养战术面板", layout="wide")
 def load_food_data():
     with Session(engine) as session:
         foods = session.exec(select(Food)).all()
-        # 建立变量映射
+       
+        if not foods:
+            from init_db import add_initial_foods
+            add_initial_foods()
+            foods = session.exec(select(Food)).all() 
         options = {f.name: {"p": f.protein_100g, "f": f.fat_100g, "c": f.carbs_100g} for f in foods}
         names = list(options.keys())
         return foods, options, names
@@ -126,9 +130,55 @@ for i, tab in enumerate(tabs):
                     st.error(f"⚠️ 碳水超标了 {round(abs(c_gap), 1)}g")
                 
             
+st.header("🔍 扩充弹药库 (从全欧数据库导入)")
 
+search_query = st.text_input("输入食物名称 (支持德文/英文，如: Quark, Haferflocken)")
 
+if st.button("搜索外部数据库"):
+    with st.spinner("正在连接欧洲食品数据库..."):
+        results = search_german_food(search_query)
+        
+        if results:
+            st.session_state.api_results = results # 存入 session state 供后续选择
+        else:
+            st.warning("没找到相关食物，换个词试试？")
 
+# 显示搜索结果并提供导入按钮
+if "api_results" in st.session_state:
+    for idx, item in enumerate(st.session_state.api_results):
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown(f"**{item['name']}** ({item['brand']})")
+            st.caption(f"C: {item['carbs_100g']}g | P: {item['protein_100g']}g | F: {item['fat_100g']}g")
+        with col2:
+            # 动态生成导入按钮
+            if st.button("📥 导入我的数据库", key=f"import_{idx}"):
+                with Session(engine) as session:
+                    new_food = Food(
+                        name=item['name'],
+                        protein_100g=item['protein_100g'],
+                        fat_100g=item['fat_100g'],
+                        carbs_100g=item['carbs_100g']
+                    )
+                    session.add(new_food)
+                    session.commit()
+                    st.success(f"✅ {item['name']} 已成功加入你的战术面板！刷新页面即可使用。")
+
+def load_food_data():
+    with Session(engine) as session:
+        foods = session.exec(select(Food)).all()
+        
+        # --- 重点：如果没数据，自动跑一遍初始化 ---
+        if not foods:
+            from init_db import add_initial_foods
+            add_initial_foods() # 确保你这个函数能正常运行
+            foods = session.exec(select(Food)).all() # 重新抓取
+        # ---------------------------------------
+        
+        options = {f.name: {"p": f.protein_100g, "f": f.fat_100g, "c": f.carbs_100g} for f in foods}
+        names = list(options.keys())
+        return foods, options, names
+    
 # app.py 改进建议
 
 # 使用 Session State 存储个人档案

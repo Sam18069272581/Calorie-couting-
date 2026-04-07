@@ -2,3 +2,4 @@ streamlit
 sqlmodel
 plotly
 pandas
+requests

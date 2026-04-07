@@ -4,6 +4,9 @@ from sqlmodel import Field, SQLModel, create_engine
 # --- 数据库表模型 ---
 
 class Food(SQLModel, table=True):
+
+    __table_args__ = {"extend_existing": True}
+    
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index = True)             # 食物名称：如 "生燕麦", "熟米饭"
     category: str           # 分类：主食, 肉类, 油脂

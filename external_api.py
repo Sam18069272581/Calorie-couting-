@@ -6,19 +6,30 @@ def search_german_food(keyword: str):
     """
     # 限制搜索区域为德国 (de)，并要求返回 JSON
     url = f"https://de.openfoodfacts.org/cgi/search.pl"
+
+    headers = {
+        "User-Agent": "MacroTracker - StudentProject - Version 1.0 (Bielefeld)"
+    }
+
     params = {
         "search_terms": keyword,
         "search_simple": 1,
         "action": "process",
         "json": 1,
-        "page_size": 5  # 每次只取前 5 个最相关的，避免数据爆炸
+        "page_size": 10  # 每次只取前 5 个最相关的，避免数据爆炸
     }
     
     try:
-        response = requests.get(url, params=params, timeout=10)
+        response = requests.get(url, params=params, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
         
+        if response.status_code != 200:
+            return[]
+        
+        data = response.json()
+        products = data.get("products", [])
+
         results = []
         for product in data.get("products", []):
             # 提取宏量营养素 (OFF 的单位默认是每 100g)

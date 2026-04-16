@@ -1,6 +1,6 @@
 # algorithm.py
 
-# 1. 定义活动等级映射 (对应图1)
+# 1. 定义活动等级映射 
 ACTIVITY_LEVELS = {
     "久坐(很少或不运动)": 1.2,        # 很少或不运动
     "轻度运动(每周1-3次)": 1.375,   # 每周1-3次
@@ -10,7 +10,7 @@ ACTIVITY_LEVELS = {
     "剧烈运动(每天体力工作 (参考专业运动员))": 2.2      # 每天体力工作 (参考专业运动员)
 }
 
-# 2. 定义目标热量系数 (对应图2/3)
+# 2. 定义目标热量系数 
 GOAL_FACTORS = {
     "极端减脂(38%热量差)": 0.62,
     "减脂(20%热量差)": 0.8,
@@ -79,7 +79,7 @@ def calculate_nutrient_gaps(old_food_data: dict, old_weight: float, new_food_dat
 
 def get_smart_fix_plan(gaps: dict, all_foods: list):
     """
-    第二层：逻辑策略。根据计算出的 gap，从数据库（all_foods）中匹配最优补丁。
+    第二层：逻辑策略。根据计算出的 gap, 从数据库(all_foods)中匹配最优补丁。
     """
     recommendations = []
     

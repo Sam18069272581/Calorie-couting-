@@ -3,3 +3,4 @@ sqlmodel
 plotly
 pandas
 requests
+psycopg2-binary
